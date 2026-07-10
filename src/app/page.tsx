@@ -1,11 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import Lenis from "lenis";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { JointTreatmentSection } from "@/components/treatment/JointTreatmentSection";
 import {
   ArrowRight,
@@ -19,15 +16,13 @@ import {
   Phone,
   Play,
   Plus,
-  Search,
   ShieldPlus,
   Star,
+  X,
 } from "lucide-react";
 
-gsap.registerPlugin(ScrollTrigger);
-
 const navItems = [
-  { label: "Проводимые операции", href: "#services", active: true },
+  { label: "Проводимые операции", href: "#services" },
   { label: "Обо мне", href: "#about" },
   { label: "Полезные информации", href: "#useful" },
   { label: "Вопрос/ответ", href: "#faq" },
@@ -167,6 +162,10 @@ function CountUp({ value }: { value: string }) {
 
   useEffect(() => {
     if (!started) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const timer = window.setTimeout(() => setDisplay(target), 0);
+      return () => window.clearTimeout(timer);
+    }
     let frame = 0;
     const duration = 1100;
     const start = performance.now();
@@ -201,98 +200,79 @@ function RevealLine({ children }: { children: React.ReactNode }) {
 export default function Home() {
   const [openFaq, setOpenFaq] = useState(0);
   const [selectedUseful, setSelectedUseful] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("services");
+  const [contactVisible, setContactVisible] = useState(false);
+  const [formStatus, setFormStatus] = useState<"idle" | "success">("idle");
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const selectedUsefulItem = useful[selectedUseful];
 
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.05,
-      easing: (t) => 1 - Math.pow(1 - t, 3),
-      smoothWheel: true,
-    });
-
-    let frame = 0;
-    const raf = (time: number) => {
-      lenis.raf(time);
-      frame = requestAnimationFrame(raf);
-    };
-    frame = requestAnimationFrame(raf);
-    lenis.on("scroll", ScrollTrigger.update);
-
-    const ctx = gsap.context(() => {
-      const portrait = document.querySelector<HTMLElement>(".doctor-portrait-entrance");
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      if (portrait && !reduceMotion) {
-        gsap.fromTo(
-          portrait,
-          {
-            y: 86,
-            scale: 0.96,
-            autoAlpha: 0,
-            filter: "blur(8px)",
-            clipPath: "inset(14% 0 0 0 round 28px)",
-          },
-          {
-            y: 0,
-            scale: 1,
-            autoAlpha: 1,
-            filter: "blur(0px)",
-            clipPath: "inset(0% 0 0 0 round 28px)",
-            duration: 1.18,
-            delay: 0.24,
-            ease: "expo.out",
-            clearProps: "filter,clipPath",
-          }
-        );
-      } else if (portrait) {
-        gsap.set(portrait, { autoAlpha: 1 });
-      }
-
-      gsap.utils.toArray<HTMLElement>(".reveal-line span").forEach((line) => {
-        gsap.fromTo(
-          line,
-          { yPercent: 105 },
-          {
-            yPercent: 0,
-            duration: 0.5,
-            ease: "expo.out",
-            scrollTrigger: { trigger: line, start: "top 88%" },
-          }
-        );
-      });
-
-      gsap.utils.toArray<HTMLElement>("[data-rise]").forEach((section) => {
-        const items = section.querySelectorAll("[data-rise-item]");
-        if (!items.length) return;
-        gsap.fromTo(
-          items,
-          { y: 30, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.48,
-            stagger: 0.07,
-            ease: "power3.out",
-            scrollTrigger: { trigger: section, start: "top 80%" },
-          }
-        );
-      });
-    });
-
-    return () => {
-      ctx.revert();
-      cancelAnimationFrame(frame);
-      lenis.destroy();
-    };
+    const sections = navItems
+      .map((item) => document.querySelector<HTMLElement>(item.href))
+      .filter((section): section is HTMLElement => Boolean(section));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-20% 0px -65%", threshold: [0.05, 0.25, 0.5] }
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const contact = document.querySelector<HTMLElement>("#contact");
+    if (!contact) return;
+    const observer = new IntersectionObserver(([entry]) => setContactVisible(entry.isIntersecting), {
+      threshold: 0.08,
+    });
+    observer.observe(contact);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const menuButton = menuButtonRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    mobileMenuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+      menuButton?.focus();
+    };
+  }, [menuOpen]);
+
+  const submitAppointment = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const message = [
+      "Здравствуйте! Хочу записаться на консультацию.",
+      `Имя: ${data.get("name")}`,
+      `Телефон: ${data.get("phone")}`,
+      `Что беспокоит: ${data.get("message") || "не указано"}`,
+    ].join("\n");
+    window.open(`https://wa.me/996706102080?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+    setFormStatus("success");
+  };
 
   return (
     <main className="site-shell">
-      <section className="hero-card">
-        <header className="topbar">
-          <a href="#" className="brand" aria-label="Жантай Шамбетов">
+      <a className="skip-link" href="#main-content">Перейти к содержанию</a>
+      <header className="topbar">
+        <div className="topbar-inner">
+          <a href="#" className="brand" aria-label="Жантай Шамбетов, на главную">
             <span className="brand-icon">
-              <ShieldPlus size={26} />
+              <ShieldPlus size={24} aria-hidden="true" />
             </span>
             <span>
               <strong>Жантай Шамбетов</strong>
@@ -300,10 +280,14 @@ export default function Home() {
             </span>
           </a>
 
-          <nav className="nav-links" aria-label="Навигация">
+          <nav className="nav-links" aria-label="Основная навигация">
             {navItems.map((item) => (
-              <a className={item.active ? "nav-pill active" : ""} href={item.href} key={item.label}>
-                {item.active && <Search size={14} />}
+              <a
+                className={activeSection === item.href.slice(1) ? "active" : ""}
+                href={item.href}
+                key={item.label}
+                aria-current={activeSection === item.href.slice(1) ? "location" : undefined}
+              >
                 {item.label}
               </a>
             ))}
@@ -314,8 +298,8 @@ export default function Home() {
               <strong>+996 706 102 080</strong>
               <span>Суеркулова 5/3</span>
             </a>
-            <a className="contact-doctor" href="#contact">
-              Связаться с доктором
+            <a className="contact-doctor" href="#appointment-form">
+              Записаться
             </a>
             <div className="social-links" aria-label="Социальные сети">
               <a href="https://wa.me/996706102080" target="_blank" rel="noreferrer" aria-label="WhatsApp">
@@ -325,14 +309,57 @@ export default function Home() {
                 <Camera size={18} />
               </a>
             </div>
-            <button className="menu-button" aria-label="Открыть меню">
-              <Menu size={22} />
+            <button
+              ref={menuButtonRef}
+              type="button"
+              className="menu-button"
+              aria-label="Открыть меню"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              onClick={() => setMenuOpen(true)}
+            >
+              <Menu size={22} aria-hidden="true" />
             </button>
           </div>
-        </header>
+        </div>
+      </header>
+
+      <div
+        id="mobile-menu"
+        ref={mobileMenuRef}
+        className={menuOpen ? "mobile-menu open" : "mobile-menu"}
+        aria-hidden={!menuOpen}
+      >
+        <div className="mobile-menu-head">
+          <strong>Разделы сайта</strong>
+          <button type="button" onClick={() => setMenuOpen(false)} aria-label="Закрыть меню">
+            <X size={24} aria-hidden="true" />
+          </button>
+        </div>
+        <nav aria-label="Мобильная навигация">
+          {navItems.map((item) => (
+            <a href={item.href} key={item.label} onClick={() => setMenuOpen(false)}>
+              {item.label}
+              <ChevronRight size={20} aria-hidden="true" />
+            </a>
+          ))}
+        </nav>
+        <div className="mobile-menu-actions">
+          <a className="button button-primary" href="#appointment-form" onClick={() => setMenuOpen(false)}>
+            Записаться на консультацию
+          </a>
+          <a className="button button-secondary" href="https://wa.me/996706102080" target="_blank" rel="noreferrer">
+            <MessageCircle size={20} aria-hidden="true" />
+            Написать в WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <section className="hero-card" id="main-content">
 
         <div className="hero-content">
           <div className="hero-copy">
+            <p className="hero-eyebrow">Травматолог-ортопед Жантай Шамбетов</p>
             <h1>
               <RevealLine>Лечение суставов</RevealLine>
               <RevealLine>и спортивных травм</RevealLine>
@@ -344,11 +371,15 @@ export default function Home() {
               <li>Пациенты из Кыргызстана и СНГ</li>
             </ul>
             <div className="hero-cta-row">
-              <motion.a whileTap={{ scale: 0.96 }} className="primary-button" href="#contact">
-                Записаться
+              <motion.a whileTap={{ scale: 0.98 }} className="button button-primary" href="#appointment-form">
+                Записаться на консультацию
               </motion.a>
-              <span>Оставьте заявку, и администратор свяжется с вами</span>
+              <a className="button button-secondary hero-whatsapp" href="https://wa.me/996706102080" target="_blank" rel="noreferrer">
+                <MessageCircle size={20} aria-hidden="true" />
+                Написать в WhatsApp
+              </a>
             </div>
+            <p className="hero-note">Оставьте заявку, и администратор свяжется с вами</p>
           </div>
 
           <div className="doctor-stage" aria-label="Портрет специалиста">
@@ -450,6 +481,8 @@ export default function Home() {
               whileHover={{ y: -6 }}
               whileTap={{ scale: 0.98 }}
               className={selectedUseful === index ? "white-card useful-card selected" : "white-card useful-card"}
+              aria-pressed={selectedUseful === index}
+              aria-controls="useful-detail"
               data-rise-item
               key={item.title}
               onClick={() => setSelectedUseful(index)}
@@ -462,6 +495,7 @@ export default function Home() {
         </div>
         <motion.div
           className="interactive-detail useful-detail"
+          id="useful-detail"
           key={selectedUsefulItem.title}
           initial={{ y: 14, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -496,6 +530,7 @@ export default function Home() {
               <button
                 type="button"
                 className="faq-question"
+                id={`faq-question-${index}`}
                 aria-expanded={openFaq === index}
                 aria-controls={`faq-answer-${index}`}
                 onClick={() => setOpenFaq(openFaq === index ? -1 : index)}
@@ -505,6 +540,8 @@ export default function Home() {
               </button>
               <motion.div
                 id={`faq-answer-${index}`}
+                role="region"
+                aria-labelledby={`faq-question-${index}`}
                 initial={false}
                 animate={{
                   height: openFaq === index ? "auto" : 0,
@@ -570,33 +607,51 @@ export default function Home() {
       </section>
 
       <section className="contact-section" id="contact">
-        <div>
+        <div className="contact-copy">
           <span>Контакты</span>
           <h2>Связаться с доктором</h2>
           <p>Клиника MEDI, Бишкек, Суеркулова 5/3</p>
+          <div className="contact-actions">
+            <a href="tel:+996706102080">
+              <Phone size={20} aria-hidden="true" />
+              <span><small>Телефон</small>+996 706 102 080</span>
+            </a>
+            <a href="https://wa.me/996706102080" target="_blank" rel="noreferrer">
+              <MessageCircle size={20} aria-hidden="true" />
+              <span><small>Мессенджер</small>WhatsApp</span>
+            </a>
+            <a href="https://www.instagram.com/dr.jantai_shambetov/" target="_blank" rel="noreferrer">
+              <Camera size={20} aria-hidden="true" />
+              <span><small>Социальная сеть</small>Instagram</span>
+            </a>
+            <span>
+              <MapPin size={20} aria-hidden="true" />
+              <span><small>Для пациентов</small>mrtrazbor@mail.ru</span>
+            </span>
+            <a href="mailto:jantai.shambetov@gmail.com">
+              <CalendarDays size={20} aria-hidden="true" />
+              <span><small>Электронная почта</small>jantai.shambetov@gmail.com</span>
+            </a>
+          </div>
         </div>
-        <div className="contact-actions">
-          <a href="tel:+996706102080">
-            <Phone size={20} />
-            +996 706 102 080
-          </a>
-          <a href="https://wa.me/996706102080" target="_blank" rel="noreferrer">
-            <MessageCircle size={20} />
-            WhatsApp
-          </a>
-          <a href="https://www.instagram.com/dr.jantai_shambetov/" target="_blank" rel="noreferrer">
-            <Camera size={20} />
-            Instagram
-          </a>
-          <span>
-            <MapPin size={20} />
-            Для пациентов: mrtrazbor@mail.ru
-          </span>
-          <a href="mailto:jantai.shambetov@gmail.com">
-            <CalendarDays size={20} />
-            jantai.shambetov@gmail.com
-          </a>
-        </div>
+
+        <form className="appointment-form" id="appointment-form" onSubmit={submitAppointment}>
+          <div className="form-heading">
+            <span>Запись на консультацию</span>
+            <h3>Оставьте контакты</h3>
+            <p>Сообщение откроется в WhatsApp. Проверьте данные перед отправкой.</p>
+          </div>
+          <label htmlFor="appointment-name">Имя</label>
+          <input id="appointment-name" name="name" autoComplete="name" required />
+          <label htmlFor="appointment-phone">Телефон</label>
+          <input id="appointment-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" required />
+          <label htmlFor="appointment-message">Что вас беспокоит</label>
+          <textarea id="appointment-message" name="message" rows={3} />
+          <button className="button button-primary" type="submit">Продолжить в WhatsApp</button>
+          <p className="form-status" role="status" aria-live="polite">
+            {formStatus === "success" ? "WhatsApp открыт. Отправьте подготовленное сообщение доктору." : "Ответ обычно приходит в WhatsApp."}
+          </p>
+        </form>
       </section>
 
       <footer className="footer">
@@ -607,6 +662,12 @@ export default function Home() {
           <ArrowRight size={16} />
         </a>
       </footer>
+
+      <div className={contactVisible ? "mobile-cta hidden" : "mobile-cta"} aria-label="Быстрые действия">
+        <a href="tel:+996706102080"><Phone size={19} aria-hidden="true" />Позвонить</a>
+        <a href="https://wa.me/996706102080" target="_blank" rel="noreferrer"><MessageCircle size={19} aria-hidden="true" />WhatsApp</a>
+        <a href="#appointment-form"><CalendarDays size={19} aria-hidden="true" />Записаться</a>
+      </div>
     </main>
   );
 }

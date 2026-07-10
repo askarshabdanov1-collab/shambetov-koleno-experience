@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import type { TreatmentId, TreatmentItem } from "@/types/treatment";
 
@@ -15,10 +14,8 @@ export function TreatmentCards({ items, activeId, onSelect, onPreview }: Props) 
   return (
     <div className="treatment-grid" role="group" aria-label="Процедуры и направления лечения">
       {items.map((item) => (
-        <motion.button
+        <button
           type="button"
-          whileHover={{ y: -4 }}
-          whileTap={{ scale: 0.98 }}
           className={activeId === item.id ? "white-card treatment-card selected" : "white-card treatment-card"}
           aria-pressed={activeId === item.id}
           key={item.id}
@@ -30,7 +27,7 @@ export function TreatmentCards({ items, activeId, onSelect, onPreview }: Props) 
         >
           <h3>{item.title}</h3>
           <ChevronRight size={22} aria-hidden="true" />
-        </motion.button>
+        </button>
       ))}
     </div>
   );

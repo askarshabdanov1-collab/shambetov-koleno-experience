@@ -39,7 +39,12 @@ export function JointTreatmentSection() {
       </div>
       <TreatmentTabs tabs={treatmentTabs} activeCategory={activeCategory} onChange={changeCategory} />
 
-      <div className="treatment-experience-grid">
+      <div
+        className="treatment-experience-grid"
+        id="treatment-panel"
+        role="tabpanel"
+        aria-labelledby={`treatment-tab-${activeCategory}`}
+      >
         <div className="treatment-content-column">
           <TreatmentCards
             items={activeTab.items}
@@ -49,7 +54,7 @@ export function JointTreatmentSection() {
           />
           <TreatmentDetails item={activeTreatment} categoryLabel={activeTab.label} />
         </div>
-        <AnatomyViewer item={activeTreatment} previewed={previewId === activeTreatment.id} />
+        <AnatomyViewer key={activeTreatment.id} item={activeTreatment} previewed={previewId === activeTreatment.id} />
       </div>
     </section>
   );

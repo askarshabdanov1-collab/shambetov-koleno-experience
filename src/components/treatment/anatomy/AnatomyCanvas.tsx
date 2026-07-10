@@ -5,12 +5,13 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, Html, OrbitControls, useProgress } from "@react-three/drei";
 import { TOUCH, type Group } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import type { TreatmentItem } from "@/types/treatment";
+import type { AnatomyFocus, TreatmentItem } from "@/types/treatment";
 import { AnatomyModel } from "./AnatomyModel";
 import { CameraController } from "./CameraController";
 
 type Props = {
   item: TreatmentItem;
+  focus: AnatomyFocus;
   previewed: boolean;
   reducedMotion: boolean;
   resetVersion: number;
@@ -28,9 +29,9 @@ function LoadingModel() {
   );
 }
 
-function ModelRotation({ item, children }: { item: TreatmentItem; children: React.ReactNode }) {
+function ModelRotation({ focus, children }: { focus: AnatomyFocus; children: React.ReactNode }) {
   const group = useRef<Group>(null);
-  const target = item.anatomyFocus.modelRotation ?? [0, -0.16, 0];
+  const target = focus.modelRotation ?? [0, -0.16, 0];
 
   useFrame((_, delta) => {
     if (!group.current) return;
@@ -43,7 +44,7 @@ function ModelRotation({ item, children }: { item: TreatmentItem; children: Reac
   return <group ref={group}>{children}</group>;
 }
 
-function Scene({ item, previewed, reducedMotion, resetVersion, onInteraction }: Props) {
+function Scene({ item, focus, previewed, reducedMotion, resetVersion, onInteraction }: Props) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const [mobile, setMobile] = useState(false);
   const modelUrl = process.env.NEXT_PUBLIC_ANATOMY_MODEL_URL?.trim() || "/models/human-anatomy.glb";
@@ -63,7 +64,7 @@ function Scene({ item, previewed, reducedMotion, resetVersion, onInteraction }: 
       <directionalLight position={[-4, 2, 2]} intensity={1.3} color="#8fdcff" />
       <pointLight position={[0, 1, -4]} intensity={1.4} color="#46bde9" />
       <Suspense fallback={<LoadingModel />}>
-        <ModelRotation item={item}>
+        <ModelRotation focus={focus}>
           <AnatomyModel modelUrl={modelUrl} item={item} previewed={previewed} reducedMotion={reducedMotion} />
         </ModelRotation>
         {!mobile && <ContactShadows position={[0, -2.46, 0]} opacity={0.18} scale={5} blur={2.4} far={4} />}
@@ -81,7 +82,7 @@ function Scene({ item, previewed, reducedMotion, resetVersion, onInteraction }: 
         touches={{ ONE: TOUCH.PAN, TWO: TOUCH.DOLLY_ROTATE }}
         onStart={onInteraction}
       />
-      <CameraController controlsRef={controlsRef} focus={item.anatomyFocus} resetVersion={resetVersion} reducedMotion={reducedMotion} />
+      <CameraController controlsRef={controlsRef} focus={focus} resetVersion={resetVersion} reducedMotion={reducedMotion} />
     </>
   );
 }

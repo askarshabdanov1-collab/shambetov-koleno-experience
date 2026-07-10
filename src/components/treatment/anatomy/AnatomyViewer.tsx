@@ -1,12 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { RotateCcw } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useElementInView } from "@/hooks/useElementInView";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useWebGLSupport } from "@/hooks/useWebGLSupport";
-import type { TreatmentItem } from "@/types/treatment";
+import type { AnatomyFocus, TreatmentItem } from "@/types/treatment";
+import { ModelControls } from "./ModelControls";
 import { WebGLErrorBoundary } from "./WebGLErrorBoundary";
 
 const AnatomyCanvas = dynamic(() => import("./AnatomyCanvas"), {
@@ -40,8 +40,32 @@ export function AnatomyViewer({ item, previewed }: Props) {
   const { ref, inView } = useElementInView();
   const reducedMotion = useReducedMotion();
   const webGLSupported = useWebGLSupport();
-  const [resetVersion, setResetVersion] = useState(0);
   const [hintVisible, setHintVisible] = useState(true);
+  const [rotationStep, setRotationStep] = useState(0);
+  const [zoom, setZoom] = useState(1);
+  const [showFullBody, setShowFullBody] = useState(false);
+  const [cameraVersion, setCameraVersion] = useState(0);
+
+  const displayFocus = useMemo<AnatomyFocus>(() => {
+    const source = showFullBody
+      ? { ...item.anatomyFocus, cameraPosition: [0, 0.05, 8.35] as [number, number, number], cameraTarget: [0, 0.05, 0] as [number, number, number], view: "full" as const }
+      : item.anatomyFocus;
+    const [tx, ty, tz] = source.cameraTarget;
+    const [px, py, pz] = source.cameraPosition;
+    const factor = showFullBody ? 1 : zoom;
+    const rotation = source.modelRotation ?? [0, 0, 0];
+    return {
+      ...source,
+      cameraPosition: [tx + (px - tx) * factor, ty + (py - ty) * factor, tz + (pz - tz) * factor],
+      modelRotation: [rotation[0], rotation[1] + rotationStep * (Math.PI / 6), rotation[2]],
+    };
+  }, [item.anatomyFocus, rotationStep, showFullBody, zoom]);
+
+  const updateView = (callback: () => void) => {
+    callback();
+    setHintVisible(false);
+    setCameraVersion((value) => value + 1);
+  };
 
   const fallback = <ViewerUnavailable label={item.anatomyFocus.hotspotLabel} />;
 
@@ -52,15 +76,7 @@ export function AnatomyViewer({ item, previewed }: Props) {
           <span className="anatomy-live-dot" aria-hidden="true" />
           Интерактивная схема
         </div>
-        <button
-          type="button"
-          className="anatomy-reset"
-          onClick={() => setResetVersion((value) => value + 1)}
-          aria-label="Сбросить положение анатомической модели"
-          title="Показать выбранную область заново"
-        >
-          <RotateCcw size={17} aria-hidden="true" />
-        </button>
+        <span>Выберите лечение, чтобы увидеть область</span>
       </div>
 
       <div className="anatomy-canvas-shell">
@@ -70,9 +86,10 @@ export function AnatomyViewer({ item, previewed }: Props) {
           <WebGLErrorBoundary fallback={fallback}>
             <AnatomyCanvas
               item={item}
+              focus={displayFocus}
               previewed={previewed}
               reducedMotion={reducedMotion}
-              resetVersion={resetVersion}
+              resetVersion={cameraVersion}
               onInteraction={() => setHintVisible(false)}
             />
           </WebGLErrorBoundary>
@@ -82,9 +99,17 @@ export function AnatomyViewer({ item, previewed }: Props) {
         )}
       </div>
 
+      <ModelControls
+        onRotate={() => updateView(() => setRotationStep((value) => value + 1))}
+        onZoomIn={() => updateView(() => { setShowFullBody(false); setZoom((value) => Math.max(0.72, value - 0.14)); })}
+        onZoomOut={() => updateView(() => { setShowFullBody(false); setZoom((value) => Math.min(1.45, value + 0.14)); })}
+        onShowFull={() => updateView(() => setShowFullBody(true))}
+        onReset={() => updateView(() => { setRotationStep(0); setZoom(1); setShowFullBody(false); })}
+      />
+
       <div className="anatomy-viewer-caption" aria-live="polite">
-        <strong>{item.anatomyFocus.hotspotLabel}</strong>
-        <span>Показана анатомическая проекция на поверхности. Схема не является хирургической навигацией и не заменяет консультацию врача.</span>
+        <strong>Сейчас показана область: {showFullBody ? "всё тело" : item.anatomyFocus.hotspotLabel}</strong>
+        <span>Интерактивная схема показывает примерное расположение анатомической области и не заменяет консультацию врача.</span>
       </div>
     </div>
   );
