@@ -20,31 +20,15 @@ export type TreatmentId =
   | "sports-injury"
   | "home-program";
 
-export type AnatomyHotspotPoint = {
-  position: [number, number, number];
-  label: string;
-  detail?: string;
-  side?: "left" | "right";
-  variant?: "primary" | "secondary";
-};
-
-export type AnatomyFocus = {
-  cameraPosition: [number, number, number];
-  cameraTarget: [number, number, number];
-  modelRotation?: [number, number, number];
-  highlightedMeshes: string[];
-  hotspotPosition: [number, number, number];
-  hotspotLabel: string;
-  hotspots?: AnatomyHotspotPoint[];
-  view: "full" | "knee" | "shoulder";
-};
-
 export type TreatmentItem = {
   id: TreatmentId;
   category: TreatmentCategory;
   title: string;
+  description: string;
+  symptoms: string[];
+  diagnostics: string;
   text: string;
-  anatomyFocus: AnatomyFocus;
+  urgentNote?: string;
 };
 
 export type TreatmentTab = {
