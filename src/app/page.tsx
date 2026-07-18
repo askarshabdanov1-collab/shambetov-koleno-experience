@@ -220,20 +220,45 @@ export default function Home() {
   });
   const splitLeftX = useTransform(
     heroProgress,
-    [0, 0.29],
-    reduceMotion ? ["-42%", "-42%"] : ["0%", "-42%"]
+    [0, 0.12, 0.4],
+    reduceMotion ? ["-42%", "-42%", "-42%"] : ["0%", "0%", "-42%"]
   );
   const splitRightX = useTransform(
     heroProgress,
-    [0, 0.29],
-    reduceMotion ? ["42%", "42%"] : ["0%", "42%"]
+    [0, 0.12, 0.4],
+    reduceMotion ? ["42%", "42%", "42%"] : ["0%", "0%", "42%"]
   );
-  const portraitY = useTransform(heroProgress, [0, 0.29], reduceMotion ? [0, 0] : [72, -6]);
-  const portraitScale = useTransform(heroProgress, [0, 0.29], reduceMotion ? [1.04, 1.04] : [0.92, 1.04]);
-  const portraitOpacity = useTransform(heroProgress, [0, 0.2], reduceMotion ? [1, 1] : [0.68, 1]);
-  const portalScale = useTransform(heroProgress, [0, 0.29], reduceMotion ? [1, 1] : [0.78, 1]);
+  const introOpacity = useTransform(heroProgress, [0, 0.12, 0.24], reduceMotion ? [0, 0, 0] : [1, 1, 0]);
+  const introY = useTransform(heroProgress, [0, 0.24], reduceMotion ? [0, 0] : [0, -38]);
+  const revealWindowScaleX = useTransform(
+    heroProgress,
+    [0, 0.08, 0.31, 0.43],
+    reduceMotion ? [1, 1, 1, 1] : [0.12, 0.12, 0.88, 1]
+  );
+  const revealWindowScaleY = useTransform(
+    heroProgress,
+    [0, 0.15, 0.34, 0.43],
+    reduceMotion ? [1, 1, 1, 1] : [0.025, 0.025, 0.56, 1]
+  );
+  const revealWindowOpacity = useTransform(
+    heroProgress,
+    [0, 0.06, 0.18],
+    reduceMotion ? [1, 1, 1] : [0, 1, 1]
+  );
+  const heroContentOpacity = useTransform(
+    heroProgress,
+    [0, 0.3, 0.45],
+    reduceMotion ? [1, 1, 1] : [0, 0, 1]
+  );
+  const heroContentY = useTransform(heroProgress, [0, 0.3, 0.48], reduceMotion ? [0, 0, 0] : [48, 48, 0]);
+  const heroContentScale = useTransform(heroProgress, [0, 0.32, 0.48], reduceMotion ? [1, 1, 1] : [0.985, 0.985, 1]);
+  const portraitY = useTransform(heroProgress, [0, 0.28, 0.48], reduceMotion ? [-6, -6, -6] : [88, 88, -6]);
+  const portraitScale = useTransform(heroProgress, [0, 0.28, 0.48], reduceMotion ? [1.04, 1.04, 1.04] : [0.9, 0.9, 1.04]);
+  const portraitOpacity = useTransform(heroProgress, [0, 0.28, 0.44], reduceMotion ? [1, 1, 1] : [0, 0, 1]);
+  const portalScale = useTransform(heroProgress, [0, 0.3, 0.48], reduceMotion ? [1, 1, 1] : [0.72, 0.72, 1]);
   const portalRotate = useTransform(heroProgress, [0, 0.5], reduceMotion ? [0, 0] : [-7, 5]);
   const abstractY = useTransform(heroProgress, [0, 0.7], reduceMotion ? [0, 0] : [0, -56]);
+  const abstractOpacity = useTransform(heroProgress, [0, 0.2, 0.42], reduceMotion ? [0.72, 0.72, 0.72] : [0, 0.1, 0.72]);
   const scrollCueOpacity = useTransform(heroProgress, [0, 0.12], reduceMotion ? [0, 0] : [1, 0]);
 
   useEffect(() => {
@@ -407,10 +432,29 @@ export default function Home() {
 
       <section ref={heroRef} className="hero-card" id="main-content">
         <div className="hero-sticky-scene">
+          <motion.div className="hero-intro" style={{ opacity: introOpacity, y: introY }}>
+            <h1>
+              <span>Травматолог-ортопед</span>
+              <strong>Жантай Шамбетов</strong>
+            </h1>
+          </motion.div>
+
           <div className="hero-motion-background" aria-hidden="true">
             <motion.div className="hero-split-panel hero-split-panel-left" style={{ x: splitLeftX }} />
             <motion.div className="hero-split-panel hero-split-panel-right" style={{ x: splitRightX }} />
-            <motion.div className="hero-blueprint" style={{ y: abstractY }}>
+            <motion.div
+              className="hero-reveal-window"
+              style={{ scaleX: revealWindowScaleX, scaleY: revealWindowScaleY, opacity: revealWindowOpacity }}
+            >
+              <Image
+                src="/assets/abstract-joint-window.webp"
+                alt=""
+                fill
+                sizes="100vw"
+                className="hero-reveal-art"
+              />
+            </motion.div>
+            <motion.div className="hero-blueprint" style={{ y: abstractY, opacity: abstractOpacity }}>
               <span className="blueprint-axis blueprint-axis-horizontal" />
               <span className="blueprint-axis blueprint-axis-vertical" />
               <span className="blueprint-ring blueprint-ring-large" />
@@ -421,14 +465,17 @@ export default function Home() {
             </motion.div>
           </div>
 
-          <div className="hero-content">
+          <motion.div
+            className="hero-content"
+            style={{ opacity: heroContentOpacity, y: heroContentY, scale: heroContentScale }}
+          >
           <div className="hero-copy">
             <p className="hero-eyebrow">Травматолог-ортопед Жантай Шамбетов</p>
-            <h1>
+            <h2 className="hero-main-title">
               <RevealLine>Лечение суставов</RevealLine>
               <RevealLine>и спортивных травм</RevealLine>
               <RevealLine>в Бишкеке</RevealLine>
-            </h1>
+            </h2>
             <p className="hero-subtitle">Травматология и ортопедия без лишних назначений</p>
             <ul className="hero-bullets">
               <li>Колено, плечо, спортивные травмы и артроскопия</li>
@@ -488,7 +535,7 @@ export default function Home() {
             </div>
             <a href="#reviews">Все отзывы</a>
           </aside>
-          </div>
+          </motion.div>
 
           <motion.div className="hero-scroll-cue" style={{ opacity: scrollCueOpacity }} aria-hidden="true">
             <span />
@@ -689,8 +736,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="contact-section" id="contact">
-        <div className="contact-copy">
+      <section className="contact-section" id="contact" data-rise>
+        <div className="contact-copy" data-rise-item>
           <span>Контакты</span>
           <h2>Связаться с доктором</h2>
           <p>Клиника MEDI, Бишкек, Суеркулова 5/3</p>
@@ -718,7 +765,7 @@ export default function Home() {
           </div>
         </div>
 
-        <form className="appointment-form" id="appointment-form" onSubmit={submitAppointment}>
+        <form className="appointment-form" id="appointment-form" onSubmit={submitAppointment} data-rise-item>
           <div className="form-heading">
             <span>Запись на консультацию</span>
             <h3>Оставьте контакты</h3>
