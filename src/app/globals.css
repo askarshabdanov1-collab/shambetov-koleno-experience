@@ -397,29 +397,183 @@ textarea:focus-visible {
 
 .hero-card {
   position: relative;
-  overflow: hidden;
-  min-height: 650px;
-  background: var(--hero);
+  overflow: clip;
+  min-height: 145svh;
+  background: #0b5477;
   color: #fff;
 }
 
-.hero-card::after {
+.hero-sticky-scene {
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+  height: 100svh;
+  min-height: 650px;
+  background: #0b5477;
+}
+
+.hero-motion-background,
+.hero-blueprint,
+.hero-split-panel {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-motion-background {
+  z-index: 0;
+  overflow: hidden;
+}
+
+.hero-split-panel {
+  z-index: 2;
+  width: 60%;
+  background: #082f49;
+  box-shadow: 0 0 0 1px rgba(80, 190, 225, 0.1);
+  will-change: transform;
+}
+
+.hero-split-panel::after {
   content: "";
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 52%;
-  background: rgba(14, 84, 117, 0.3);
-  clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);
-  pointer-events: none;
+  top: 7%;
+  bottom: 7%;
+  width: 1px;
+  background: rgba(116, 219, 242, 0.3);
+}
+
+.hero-split-panel-left {
+  right: auto;
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 0 100%);
+}
+
+.hero-split-panel-left::after {
+  right: 8%;
+  transform: rotate(4deg);
+}
+
+.hero-split-panel-right {
+  left: auto;
+  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.hero-split-panel-right::after {
+  left: 8%;
+  transform: rotate(4deg);
+}
+
+.hero-blueprint {
+  z-index: 1;
+  left: 42%;
+  width: 58%;
+  opacity: 0.72;
+  will-change: transform;
+}
+
+.blueprint-axis,
+.blueprint-ring,
+.blueprint-corner {
+  position: absolute;
+  display: block;
+}
+
+.blueprint-axis {
+  background: rgba(126, 222, 245, 0.2);
+}
+
+.blueprint-axis-horizontal {
+  top: 51%;
+  left: 5%;
+  width: 90%;
+  height: 1px;
+}
+
+.blueprint-axis-vertical {
+  top: 8%;
+  left: 52%;
+  width: 1px;
+  height: 84%;
+}
+
+.blueprint-ring {
+  border: 1px solid rgba(126, 222, 245, 0.3);
+  border-radius: 50%;
+}
+
+.blueprint-ring::before,
+.blueprint-ring::after {
+  content: "";
+  position: absolute;
+  background: rgba(126, 222, 245, 0.34);
+}
+
+.blueprint-ring::before {
+  top: 50%;
+  right: -18px;
+  left: -18px;
+  height: 1px;
+}
+
+.blueprint-ring::after {
+  top: -18px;
+  bottom: -18px;
+  left: 50%;
+  width: 1px;
+}
+
+.blueprint-ring-large {
+  top: 4%;
+  left: 17%;
+  width: min(520px, 44vw);
+  aspect-ratio: 1;
+  animation: blueprint-rotate 26s linear infinite;
+}
+
+.blueprint-ring-small {
+  right: 5%;
+  bottom: 10%;
+  width: 154px;
+  aspect-ratio: 1;
+  border-style: dashed;
+  animation: blueprint-rotate 18s linear infinite reverse;
+}
+
+.blueprint-corner {
+  width: 72px;
+  height: 72px;
+  border-color: rgba(126, 222, 245, 0.46);
+}
+
+.blueprint-corner-top {
+  top: 9%;
+  right: 7%;
+  border-top: 2px solid;
+  border-right: 2px solid;
+}
+
+.blueprint-corner-bottom {
+  bottom: 8%;
+  left: 8%;
+  border-bottom: 2px solid;
+  border-left: 2px solid;
+}
+
+.blueprint-index {
+  position: absolute;
+  right: 8%;
+  bottom: 8%;
+  color: rgba(205, 242, 250, 0.55);
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: 0;
 }
 
 .hero-content {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   display: grid;
   width: min(var(--container), calc(100% - 48px));
+  height: 100%;
   min-height: 650px;
   grid-template-columns: minmax(0, 0.95fr) minmax(390px, 0.75fr) 190px;
   gap: 24px;
@@ -506,6 +660,62 @@ textarea:focus-visible {
   min-height: 650px;
 }
 
+.doctor-portal {
+  position: absolute;
+  z-index: 0;
+  top: 17%;
+  left: 50%;
+  width: min(430px, 34vw);
+  aspect-ratio: 1;
+  border: 1px solid rgba(160, 230, 247, 0.28);
+  border-radius: 50%;
+  transform-origin: center;
+  translate: -50% 0;
+  will-change: transform;
+}
+
+.doctor-portal::before {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border: 1px dashed rgba(160, 230, 247, 0.34);
+  border-radius: 50%;
+}
+
+.doctor-portal-ring,
+.doctor-portal-line {
+  position: absolute;
+  display: block;
+}
+
+.doctor-portal-ring {
+  border: 1px solid rgba(160, 230, 247, 0.26);
+  border-radius: 50%;
+}
+
+.doctor-portal-ring-one {
+  inset: -8%;
+  border-style: dashed;
+  animation: blueprint-rotate 32s linear infinite;
+}
+
+.doctor-portal-ring-two {
+  inset: 28%;
+  animation: blueprint-rotate 16s linear infinite reverse;
+}
+
+.doctor-portal-line {
+  top: 50%;
+  left: -15%;
+  width: 130%;
+  height: 1px;
+  background: rgba(160, 230, 247, 0.26);
+}
+
+.doctor-portal-line-two {
+  transform: rotate(90deg);
+}
+
 .doctor-portrait,
 .doctor-portrait-entrance {
   position: absolute;
@@ -513,14 +723,14 @@ textarea:focus-visible {
 }
 
 .doctor-portrait {
+  z-index: 1;
   filter: drop-shadow(0 28px 36px rgba(1, 18, 28, 0.3));
+  transform-origin: center bottom;
+  will-change: transform, opacity;
 }
 
 .doctor-portrait-entrance {
-  opacity: 0;
-  transform: translateY(42px) scale(0.98);
-  transform-origin: center bottom;
-  animation: portrait-enter 720ms cubic-bezier(0.16, 1, 0.3, 1) 120ms forwards;
+  opacity: 1;
 }
 
 .doctor-photo {
@@ -549,8 +759,51 @@ textarea:focus-visible {
   backdrop-filter: blur(16px);
 }
 
-@keyframes portrait-enter {
-  to { opacity: 1; transform: translateY(0) scale(1); }
+.hero-scroll-cue {
+  position: absolute;
+  z-index: 5;
+  bottom: 24px;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  color: rgba(226, 246, 251, 0.68);
+  transform: translateX(-50%);
+}
+
+.hero-scroll-cue span {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 34px;
+  overflow: hidden;
+  background: rgba(226, 246, 251, 0.24);
+}
+
+.hero-scroll-cue span::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 14px;
+  background: #79dff4;
+  animation: scroll-cue 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.hero-scroll-cue small {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+@keyframes blueprint-rotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes scroll-cue {
+  0% { transform: translateY(-16px); opacity: 0; }
+  35% { opacity: 1; }
+  100% { transform: translateY(36px); opacity: 0; }
 }
 
 .reviews-mini {
@@ -622,12 +875,43 @@ textarea:focus-visible {
 }
 
 .result-section {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   background: var(--background-secondary);
   padding-bottom: clamp(64px, 8vw, 96px);
 }
 
+.result-section::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  right: -130px;
+  width: 360px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(8, 120, 185, 0.12);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 44px rgba(8, 120, 185, 0.035),
+    0 0 0 88px rgba(8, 120, 185, 0.025);
+  pointer-events: none;
+}
+
+.result-section::after {
+  content: "";
+  position: absolute;
+  bottom: 52px;
+  left: 4vw;
+  width: 130px;
+  height: 76px;
+  border-bottom: 2px solid rgba(8, 120, 185, 0.18);
+  border-left: 2px solid rgba(8, 120, 185, 0.18);
+  pointer-events: none;
+}
+
 .result-section > * {
+  position: relative;
+  z-index: 1;
   width: min(var(--container), calc(100% - 48px));
   margin-right: auto;
   margin-left: auto;
@@ -734,6 +1018,81 @@ textarea:focus-visible {
 
 .treatment-heading {
   max-width: 760px;
+}
+
+.treatments-section,
+.doctor-section,
+.useful-section,
+.reviews-section {
+  position: relative;
+}
+
+.treatments-section::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 64px;
+  right: -110px;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgba(8, 120, 185, 0.13);
+  transform: rotate(24deg);
+  pointer-events: none;
+}
+
+.doctor-section::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 8%;
+  left: -170px;
+  width: 280px;
+  aspect-ratio: 1;
+  border: 1px dashed rgba(8, 120, 185, 0.18);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.useful-section::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -74px;
+  bottom: 14%;
+  width: 180px;
+  height: 92px;
+  border-top: 2px solid rgba(8, 120, 185, 0.14);
+  border-right: 2px solid rgba(8, 120, 185, 0.14);
+  pointer-events: none;
+}
+
+[data-rise] > *,
+[data-rise] [data-rise-item] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 560ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 680ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-rise].is-visible > *,
+[data-rise].is-visible [data-rise-item] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-rise].is-visible > :nth-child(2),
+[data-rise].is-visible [data-rise-item]:nth-child(2) {
+  transition-delay: 80ms;
+}
+
+[data-rise].is-visible > :nth-child(3),
+[data-rise].is-visible [data-rise-item]:nth-child(3) {
+  transition-delay: 150ms;
+}
+
+[data-rise].is-visible [data-rise-item]:nth-child(4) {
+  transition-delay: 220ms;
 }
 
 .treatment-tabs {
@@ -1469,6 +1828,11 @@ textarea:focus-visible {
     grid-template-columns: minmax(0, 1fr) minmax(360px, 0.72fr);
   }
 
+  .hero-blueprint {
+    left: 36%;
+    width: 64%;
+  }
+
   .reviews-mini {
     position: absolute;
     right: 0;
@@ -1548,10 +1912,33 @@ textarea:focus-visible {
     min-height: auto;
   }
 
-  .hero-card::after {
-    top: 50%;
+  .hero-card {
+    min-height: auto;
+  }
+
+  .hero-sticky-scene {
+    position: relative;
+    top: auto;
+    height: auto;
+    min-height: auto;
+  }
+
+  .hero-split-panel {
+    width: 82%;
+  }
+
+  .hero-split-panel-left {
+    clip-path: polygon(0 0, 100% 0, 82% 100%, 0 100%);
+  }
+
+  .hero-split-panel-right {
+    clip-path: polygon(18% 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  .hero-blueprint {
+    left: 0;
     width: 100%;
-    clip-path: none;
+    opacity: 0.56;
   }
 
   .hero-content {
@@ -1591,10 +1978,15 @@ textarea:focus-visible {
   }
 
   .doctor-portrait {
-    right: 50%;
-    left: auto;
+    right: auto;
+    left: 50%;
     width: min(490px, 118vw);
-    transform: translateX(50%);
+    translate: -50% 0;
+  }
+
+  .doctor-portal {
+    top: 14%;
+    width: min(390px, 92vw);
   }
 
   .doctor-photo {
@@ -1613,6 +2005,10 @@ textarea:focus-visible {
     width: 100%;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     padding: 22px 0 30px;
+  }
+
+  .hero-scroll-cue {
+    display: none;
   }
 
   .result-section,
@@ -1791,7 +2187,8 @@ textarea:focus-visible {
     transition-duration: 0.01ms !important;
   }
 
-  .doctor-portrait-entrance {
+  [data-rise] > *,
+  [data-rise] [data-rise-item] {
     opacity: 1;
     transform: none;
   }

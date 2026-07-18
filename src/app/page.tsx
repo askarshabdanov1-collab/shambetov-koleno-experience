@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import { JointTreatmentSection } from "@/components/treatment/JointTreatmentSection";
 import {
   ArrowRight,
@@ -204,9 +204,37 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState("services");
   const [contactVisible, setContactVisible] = useState(false);
   const [formStatus, setFormStatus] = useState<"idle" | "success">("idle");
+  const heroRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const selectedUsefulItem = useful[selectedUseful];
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const heroProgress = useSpring(heroScrollProgress, {
+    stiffness: 86,
+    damping: 24,
+    mass: 0.45,
+  });
+  const splitLeftX = useTransform(
+    heroProgress,
+    [0, 0.29],
+    reduceMotion ? ["-42%", "-42%"] : ["0%", "-42%"]
+  );
+  const splitRightX = useTransform(
+    heroProgress,
+    [0, 0.29],
+    reduceMotion ? ["42%", "42%"] : ["0%", "42%"]
+  );
+  const portraitY = useTransform(heroProgress, [0, 0.29], reduceMotion ? [0, 0] : [72, -6]);
+  const portraitScale = useTransform(heroProgress, [0, 0.29], reduceMotion ? [1.04, 1.04] : [0.92, 1.04]);
+  const portraitOpacity = useTransform(heroProgress, [0, 0.2], reduceMotion ? [1, 1] : [0.68, 1]);
+  const portalScale = useTransform(heroProgress, [0, 0.29], reduceMotion ? [1, 1] : [0.78, 1]);
+  const portalRotate = useTransform(heroProgress, [0, 0.5], reduceMotion ? [0, 0] : [-7, 5]);
+  const abstractY = useTransform(heroProgress, [0, 0.7], reduceMotion ? [0, 0] : [0, -56]);
+  const scrollCueOpacity = useTransform(heroProgress, [0, 0.12], reduceMotion ? [0, 0] : [1, 0]);
 
   useEffect(() => {
     const sections = navItems
@@ -224,6 +252,28 @@ export default function Home() {
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-rise]"));
+    if (reduceMotion) {
+      sections.forEach((section) => section.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      { rootMargin: "0px 0px -12%", threshold: 0.12 }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [reduceMotion]);
 
   useEffect(() => {
     const contact = document.querySelector<HTMLElement>("#contact");
@@ -355,9 +405,23 @@ export default function Home() {
         </div>
       </div>
 
-      <section className="hero-card" id="main-content">
+      <section ref={heroRef} className="hero-card" id="main-content">
+        <div className="hero-sticky-scene">
+          <div className="hero-motion-background" aria-hidden="true">
+            <motion.div className="hero-split-panel hero-split-panel-left" style={{ x: splitLeftX }} />
+            <motion.div className="hero-split-panel hero-split-panel-right" style={{ x: splitRightX }} />
+            <motion.div className="hero-blueprint" style={{ y: abstractY }}>
+              <span className="blueprint-axis blueprint-axis-horizontal" />
+              <span className="blueprint-axis blueprint-axis-vertical" />
+              <span className="blueprint-ring blueprint-ring-large" />
+              <span className="blueprint-ring blueprint-ring-small" />
+              <span className="blueprint-corner blueprint-corner-top" />
+              <span className="blueprint-corner blueprint-corner-bottom" />
+              <span className="blueprint-index">ORTHO / 01</span>
+            </motion.div>
+          </div>
 
-        <div className="hero-content">
+          <div className="hero-content">
           <div className="hero-copy">
             <p className="hero-eyebrow">Травматолог-ортопед Жантай Шамбетов</p>
             <h1>
@@ -383,7 +447,20 @@ export default function Home() {
           </div>
 
           <div className="doctor-stage" aria-label="Портрет специалиста">
-            <div className="doctor-portrait">
+            <motion.div
+              className="doctor-portal"
+              style={{ scale: portalScale, rotate: portalRotate }}
+              aria-hidden="true"
+            >
+              <span className="doctor-portal-ring doctor-portal-ring-one" />
+              <span className="doctor-portal-ring doctor-portal-ring-two" />
+              <span className="doctor-portal-line doctor-portal-line-one" />
+              <span className="doctor-portal-line doctor-portal-line-two" />
+            </motion.div>
+            <motion.div
+              className="doctor-portrait"
+              style={{ y: portraitY, scale: portraitScale, opacity: portraitOpacity }}
+            >
               <div className="doctor-portrait-entrance">
                 <Image
                   src="/assets/doctor-hero-torso.webp"
@@ -399,7 +476,7 @@ export default function Home() {
                   MEDI
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           <aside className="reviews-mini">
@@ -411,6 +488,12 @@ export default function Home() {
             </div>
             <a href="#reviews">Все отзывы</a>
           </aside>
+          </div>
+
+          <motion.div className="hero-scroll-cue" style={{ opacity: scrollCueOpacity }} aria-hidden="true">
+            <span />
+            <small>Прокрутите</small>
+          </motion.div>
         </div>
       </section>
 
